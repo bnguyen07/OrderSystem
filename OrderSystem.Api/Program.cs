@@ -6,6 +6,8 @@ using OrderSystem.Api.Data;
 using OrderSystem.Api.Services;
 using OrderSystem.Api.Repositories;
 using Microsoft.OpenApi.Models;
+using MassTransit;
+using OrderSystem.Api.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -19,6 +21,26 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration["RedisCache:Configuration"];
     options.InstanceName = builder.Configuration["RedisCache:InstanceName"];
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    // Tell MassTransit to legally register our Background Worker
+    x.AddConsumer<OrderProcessingConsumer>();
+    
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // When we run in Docker, RabbitMQ is named "rabbitmq", but when debugging locally it's "localhost"
+        var hostname = builder.Environment.IsEnvironment("Docker") ? "rabbitmq" : "localhost";
+        
+        cfg.Host(hostname, "/", h => {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        // Automatically build Queues in RabbitMQ and attach them to the Background Worker
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 builder.Services.AddScoped<AuthService>();

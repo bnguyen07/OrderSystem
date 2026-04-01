@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using OrderSystem.Api.DTOs;
 using OrderSystem.Api.Services;
+using MassTransit;
+using OrderSystem.Api.Events;
 
 namespace OrderSystem.Api.Controllers
 {
@@ -12,10 +14,12 @@ namespace OrderSystem.Api.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _service;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public OrderController(IOrderService service)
+        public OrderController(IOrderService service, IPublishEndpoint publishEndpoint)
         {
             _service = service;
+            _publishEndpoint = publishEndpoint;
         }
 
         [HttpGet("user")]
@@ -29,25 +33,22 @@ namespace OrderSystem.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<OrderResponseDto>> CreateOrder(OrderCreateDto dto)
+        public async Task<IActionResult> CreateOrder(OrderCreateDto dto)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(userIdString, out int userId))
-            {
-                dto.UserId = userId;
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
 
             if (dto.ProductIds == null || !dto.ProductIds.Any())
             {
                 return BadRequest("Order must contain at least one product.");
             }
 
-            var createdOrder = await _service.CreateOrderAsync(dto);
-            return Ok(createdOrder);
+            // FIRE AND FORGET! We instantly drop the payload into RabbitMQ.
+            // Entity Framework SQL is absolutely bypassed at this exact step!
+            await _publishEndpoint.Publish(new OrderSubmittedEvent(userId, dto.ProductIds));
+
+            // Tell the user "HTTP 202 Accepted: We received your request."
+            return Accepted(new { Message = "Your order was received and is processing securely in the background." });
         }
     }
 }

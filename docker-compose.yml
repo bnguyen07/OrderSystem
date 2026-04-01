@@ -11,9 +11,11 @@ services:
       - "5055:8080"  # Expose port 5055 on your Windows Laptop, routing it to internal port 8080
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker # This triggers our custom appsettings overrides later!
+    restart: always # If DB/RabbitMQ is slow to boot and API crashes, automatically revive it!
     depends_on:
       - sqlserver
       - redis
+      - rabbitmq
 
   # 2. Redis Caching Engine
   redis:
@@ -31,3 +33,11 @@ services:
       - SA_PASSWORD=YourSuper!Str0ngPassword!1
       - MSSQL_PID=Developer
     # Completely internally isolated from your laptop's normal SQL Server. Zero port conflicts!
+
+  # 4. RabbitMQ Message Broker (With UI Dashboard)
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - "15672:15672" # The Management Website for you to physically view the queue!
+    # Port 5672 is left unmapped. The API will talk to it internally over Docker.
