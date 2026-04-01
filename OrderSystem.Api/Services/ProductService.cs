@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using OrderSystem.Api.DTOs;
 using OrderSystem.Api.Models;
 using OrderSystem.Api.Repositories;
@@ -7,45 +9,75 @@ namespace OrderSystem.Api.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepository _repository;
+        private readonly IDistributedCache _cache; // Injected Redis connection interface
 
-        public ProductService(IProductRepository repository)
+        public ProductService(IProductRepository repository, IDistributedCache cache)
         {
             _repository = repository;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<ProductResponseDto>> GetAllProductsAsync()
         {
+            var cacheKey = "PRODUCTS_ALL";
+            
+            // 1. Ask Redis for the data first
+            var cachedProducts = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedProducts)) // Cache Hit!
+            {
+                return JsonSerializer.Deserialize<IEnumerable<ProductResponseDto>>(cachedProducts)!;
+            }
+
+            // 2. Cache Miss: Ask SQL Server (slow operation)
             var products = await _repository.GetAllAsync();
-            return products.Select(p => new ProductResponseDto
+            var response = products.Select(p => new ProductResponseDto
             {
                 Id = p.Id,
                 Name = p.Name,
                 Price = p.Price
             });
+
+            // 3. Save the result backward into Redis for the next 15 minutes!
+            var cacheOptions = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15) };
+            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(response), cacheOptions);
+
+            return response;
         }
 
         public async Task<ProductResponseDto?> GetProductByIdAsync(int id)
         {
+            var cacheKey = $"PRODUCT_{id}";
+            var cachedProduct = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedProduct))
+            {
+                return JsonSerializer.Deserialize<ProductResponseDto>(cachedProduct)!;
+            }
+
             var product = await _repository.GetByIdAsync(id);
             if (product == null) return null;
 
-            return new ProductResponseDto
+            var response = new ProductResponseDto
             {
                 Id = product.Id,
                 Name = product.Name,
                 Price = product.Price
             };
+
+            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(response), 
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15) });
+
+            return response;
         }
 
         public async Task<ProductResponseDto> CreateProductAsync(ProductCreateDto dto)
         {
-            var product = new Product
-            {
-                Name = dto.Name,
-                Price = dto.Price
-            };
-
+            var product = new Product { Name = dto.Name, Price = dto.Price };
             var createdProduct = await _repository.AddAsync(product);
+
+            // Important: Trash the old list of products in Redis because a new product just got added!
+            await _cache.RemoveAsync("PRODUCTS_ALL");
 
             return new ProductResponseDto
             {
@@ -64,6 +96,10 @@ namespace OrderSystem.Api.Services
             existingProduct.Price = dto.Price;
 
             await _repository.UpdateAsync(existingProduct);
+            
+            // Trash the old cache keys containing the stale product data
+            await _cache.RemoveAsync("PRODUCTS_ALL");
+            await _cache.RemoveAsync($"PRODUCT_{id}");
             return true;
         }
 
@@ -73,6 +109,9 @@ namespace OrderSystem.Api.Services
             if (existingProduct == null) return false;
 
             await _repository.DeleteAsync(id);
+            
+            await _cache.RemoveAsync("PRODUCTS_ALL");
+            await _cache.RemoveAsync($"PRODUCT_{id}");
             return true;
         }
     }

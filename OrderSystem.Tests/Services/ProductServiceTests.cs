@@ -5,17 +5,26 @@ using OrderSystem.Api.Services;
 using OrderSystem.Api.Models;
 using OrderSystem.Api.DTOs;
 
+using Microsoft.Extensions.Caching.Distributed;
+
 namespace OrderSystem.Tests.Services
 {
     public class ProductServiceTests
     {
         private readonly Mock<IProductRepository> _mockRepo;
+        private readonly Mock<IDistributedCache> _mockCache;
         private readonly ProductService _service;
 
         public ProductServiceTests()
         {
             _mockRepo = new Mock<IProductRepository>();
-            _service = new ProductService(_mockRepo.Object);
+            _mockCache = new Mock<IDistributedCache>();
+            
+            // Mock empty cache to force repository logic (simulate cache-miss usually)
+            var returnTask = Task.FromResult((byte[]?)null);
+            _mockCache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(returnTask);
+            
+            _service = new ProductService(_mockRepo.Object, _mockCache.Object);
         }
 
         [Fact]

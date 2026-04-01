@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. Your Custom .NET API Server
+  ordersystem-api:
+    image: ordersystem-api:latest
+    build:
+      context: . # Look in this folder
+      dockerfile: OrderSystem.Api/Dockerfile
+    ports:
+      - "5055:8080"  # Expose port 5055 on your Windows Laptop, routing it to internal port 8080
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker # This triggers our custom appsettings overrides later!
+    depends_on:
+      - sqlserver
+      - redis
+
+  # 2. Redis Caching Engine
+  redis:
+    image: redis:latest
+    restart: always
+    # Notice there are no `ports` mapped. This database is purely internal to the Docker Network!
+    # No hacker from the outside Internet can access it, only the API can.
+
+  # 3. Microsoft SQL Server (Developer Edition)
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourSuper!Str0ngPassword!1
+      - MSSQL_PID=Developer
+    # Completely internally isolated from your laptop's normal SQL Server. Zero port conflicts!
