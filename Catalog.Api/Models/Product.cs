@@ -1,9 +1,10 @@
-namespace OrderSystem.Api.Models
+namespace Catalog.Api.Models
 {
     public class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public int StockQuantity { get; set; }
     }
 }

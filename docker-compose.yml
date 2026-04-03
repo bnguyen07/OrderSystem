@@ -14,8 +14,22 @@ services:
     restart: always # If DB/RabbitMQ is slow to boot and API crashes, automatically revive it!
     depends_on:
       - sqlserver
-      - redis
       - rabbitmq
+      
+  # NEW: Our Brand New Microservice!
+  catalog-api:
+    image: catalog-api:latest
+    build:
+      context: . # Look in this folder
+      dockerfile: Catalog.Api/Dockerfile
+    ports:
+      - "5056:8080"  # Expose port 5056 on your Windows Laptop!
+    restart: always # Add Enterprise Resiliency so it restarts if SQL is slow!
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker # Connect to Docker Network correctly
+    depends_on:
+      - sqlserver
+      - redis
 
   # 2. Redis Caching Engine
   redis:
@@ -32,7 +46,9 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=YourSuper!Str0ngPassword!1
       - MSSQL_PID=Developer
-    # Completely internally isolated from your laptop's normal SQL Server. Zero port conflicts!
+    # Physically punch a hole through Docker so Windows SSMS can talk to Port 1433!
+    ports:
+      - "14333:1433"
 
   # 4. RabbitMQ Message Broker (With UI Dashboard)
   rabbitmq:

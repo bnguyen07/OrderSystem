@@ -17,12 +17,7 @@ if (!builder.Environment.IsEnvironment("Testing"))
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration["RedisCache:Configuration"];
-    options.InstanceName = builder.Configuration["RedisCache:InstanceName"];
-});
-
+// Redis has been officially migrated to the Catalog.Api Microservice!
 builder.Services.AddMassTransit(x =>
 {
     // Tell MassTransit to legally register our Background Worker
@@ -39,13 +34,11 @@ builder.Services.AddMassTransit(x =>
         });
 
         // Automatically build Queues in RabbitMQ and attach them to the Background Worker
-        cfg.ConfigureEndpoints(context);
-    });
 });
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 

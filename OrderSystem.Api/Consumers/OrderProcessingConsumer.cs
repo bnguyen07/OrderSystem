@@ -10,16 +10,34 @@ namespace OrderSystem.Api.Consumers
     {
         private readonly IOrderService _orderService;
         private readonly ILogger<OrderProcessingConsumer> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderProcessingConsumer(IOrderService orderService, ILogger<OrderProcessingConsumer> logger)
+        public OrderProcessingConsumer(IOrderService orderService, ILogger<OrderProcessingConsumer> logger, IHttpClientFactory httpClientFactory)
         {
             _orderService = orderService;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task Consume(ConsumeContext<OrderSubmittedEvent> context)
         {
             _logger.LogInformation("🐇 RabbitMQ Worker picked up a Checkout Event for User ID: {UserId}", context.Message.UserId);
+
+            // 1. Physically Network to the Catalog Microservice to confirm Products exist!
+            var httpClient = _httpClientFactory.CreateClient();
+            var catalogHost = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Docker" ? "catalog-api:8080" : "localhost:5056";
+
+            foreach (var productId in context.Message.ProductIds)
+            {
+                _logger.LogInformation("🌐 Requesting Inventory Check from Catalog Service for Product {ProductId}...", productId);
+                var response = await httpClient.GetAsync($"http://{catalogHost}/api/Product/{productId}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("🛑 Product {ProductId} doesn't exist in the Catalog Database! Order aborted.", productId);
+                    return; // Gracefully abort the entire MassTransit Consumer thread
+                }
+            }
 
             var dto = new OrderSystem.Api.DTOs.OrderCreateDto 
             { 
@@ -27,7 +45,7 @@ namespace OrderSystem.Api.Consumers
                 ProductIds = context.Message.ProductIds 
             };
             
-            // Execute the heavy, slow SQL Database logic perfectly in the background, out of sight!
+            // 2. Execute the heavy, slow SQL Database logic perfectly in the background, out of sight!
             var result = await _orderService.CreateOrderAsync(dto);
 
             if (result != null)
