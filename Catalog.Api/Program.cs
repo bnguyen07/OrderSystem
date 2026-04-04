@@ -5,6 +5,17 @@ using Catalog.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Enable Cross-Origin Resource Sharing (CORS) so the Next.js UI can communicate securely
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowUI", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Specifically allow Next.js
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers();
 
 // 1. Setup independent SQL Server Database Context just for Products
@@ -33,6 +44,9 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     context.Database.Migrate();
 }
+
+// Apply the CORS pipeline rule exactly before routing
+app.UseCors("AllowUI");
 
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {

@@ -10,6 +10,18 @@ using MassTransit;
 using OrderSystem.Api.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enable Cross-Origin Resource Sharing (CORS) so the Next.js UI can communicate securely
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowUI", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Specifically allow Next.js
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers();
 if (!builder.Environment.IsEnvironment("Testing"))
 {
@@ -34,6 +46,8 @@ builder.Services.AddMassTransit(x =>
         });
 
         // Automatically build Queues in RabbitMQ and attach them to the Background Worker
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 builder.Services.AddHttpClient();
@@ -127,6 +141,9 @@ else
         });
     });
 }
+
+// Apply the CORS pipeline rule exactly before routing
+app.UseCors("AllowUI");
 
 app.UseHttpsRedirection();
 

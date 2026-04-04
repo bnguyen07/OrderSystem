@@ -15,6 +15,18 @@ services:
     depends_on:
       - sqlserver
       - rabbitmq
+
+  # NEW Phase 6: The Frontend Visual UI!
+  ordersystem-ui:
+    image: ordersystem-ui:latest
+    build:
+      context: ./ordersystem-ui # Build exactly from the newly scaffolded Next.js folder
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Expose Port 3000 mapping seamlessly into the React framework
+    depends_on:
+      - ordersystem-api
+      - catalog-api
       
   # NEW: Our Brand New Microservice!
   catalog-api:
