@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 // The shape of our actual backend data!
 type Product = {
@@ -12,6 +13,7 @@ type Product = {
 
 // Extremely Premium Glassmorphic Tailwind Dashboard
 export default function OrderDashboard() {
+  const { data: session } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,14 +37,17 @@ export default function OrderDashboard() {
     setOrderStatus("Transmitting Securely to RabbitMQ...");
     
     try {
+      // Extract the raw Google Identity Token from our NextAuth session!
+      const token = (session as any)?.idToken;
+
       const response = await fetch("http://localhost:5055/api/Order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Normally we'd pass the actual JWT Token here instead of hardcoding UserId!
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          userId: 1, 
+          userId: 1, // You could eventually pull this from session too!
           productIds: cart
         }),
       });
@@ -73,10 +78,43 @@ export default function OrderDashboard() {
           <p className="text-slate-400 mt-2 font-medium">Global Microservice Logistics</p>
         </div>
         
-        {/* Cart Counter */}
-        <div className="bg-slate-800/80 backdrop-blur border border-white/10 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
-          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          <span className="font-bold text-lg">{cart.length} Items</span>
+        <div className="flex items-center gap-6">
+          {/* Auth Section */}
+          <div className="bg-slate-800/80 backdrop-blur border border-white/10 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-4">
+            {session ? (
+              <>
+                {session.user?.image && (
+                  <img src={session.user.image} alt="User Profile" className="w-10 h-10 rounded-full border-2 border-indigo-500 shadow-md" />
+                )}
+                <div className="flex flex-col text-sm text-left">
+                  <span className="font-bold text-white leading-tight">{session.user?.name}</span>
+                  <span className="text-slate-400 text-xs font-medium">{session.user?.email}</span>
+                </div>
+                <button 
+                  onClick={() => signOut()}
+                  className="ml-2 text-xs font-bold uppercase tracking-wider bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-2 rounded-xl transition-all active:scale-95"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => signIn("google")}
+                className="text-sm font-bold bg-white text-slate-900 hover:bg-slate-200 px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-white/10"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                </svg>
+                Sign In
+              </button>
+            )}
+          </div>
+
+          {/* Cart Counter */}
+          <div className="bg-slate-800/80 backdrop-blur border border-white/10 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <span className="font-bold text-lg">{cart.length} Items</span>
+          </div>
         </div>
       </header>
 

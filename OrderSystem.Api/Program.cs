@@ -56,20 +56,59 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "BearerGateway";
+    options.DefaultChallengeScheme = "BearerGateway";
+})
+.AddPolicyScheme("BearerGateway", "BearerGateway", options =>
+{
+    // Dynamically forward the request to Google or our Local Authentication Scheme based on the Token!
+    options.ForwardDefaultSelector = context =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        string authorization = context.Request.Headers["Authorization"];
+        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
-    });
+            var token = authorization.Substring("Bearer ".Length).Trim();
+            var jwtHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            if (jwtHandler.CanReadToken(token))
+            {
+                var jwt = jwtHandler.ReadJwtToken(token);
+                if (jwt.Issuer == "https://accounts.google.com")
+                {
+                    return "Google";
+                }
+            }
+        }
+        return "Local";
+    };
+})
+.AddJwtBearer("Local", options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+})
+.AddJwtBearer("Google", options =>
+{
+    options.Authority = "https://accounts.google.com";
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = "https://accounts.google.com",
+        ValidateAudience = true,
+        // The exact Client ID you supplied!
+        ValidAudience = "396860985031-3huj88f0sg6csnbbe8bllmpcvto1lp2c.apps.googleusercontent.com",
+        ValidateLifetime = true
+    };
+});
 builder.Services.AddAuthorization();
 
 builder.Services.AddSwaggerGen(c =>

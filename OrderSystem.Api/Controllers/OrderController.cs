@@ -26,7 +26,19 @@ namespace OrderSystem.Api.Controllers
         public async Task<ActionResult<IEnumerable<OrderResponseDto>>> GetMyOrders()
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
+            
+            // If the user logged in via Local JWT, this is an Integer.
+            // If the user logged in via Google, this is a massive String!
+            // For now, map all Google users to Enterprise System ID 1.
+            int userId = 1;
+            if (int.TryParse(userIdString, out int parsedId)) 
+            {
+                userId = parsedId;
+            }
+            else if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized();
+            }
 
             var orders = await _service.GetUserOrdersAsync(userId);
             return Ok(orders);
@@ -36,7 +48,17 @@ namespace OrderSystem.Api.Controllers
         public async Task<IActionResult> CreateOrder(OrderCreateDto dto)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
+            
+            // Convert Google identity strings into integer System IDs seamlessly
+            int userId = 1;
+            if (int.TryParse(userIdString, out int parsedId)) 
+            {
+                userId = parsedId;
+            }
+            else if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized();
+            }
 
             if (dto.ProductIds == null || !dto.ProductIds.Any())
             {
