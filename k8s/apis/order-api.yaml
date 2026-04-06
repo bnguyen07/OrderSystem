@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordersystem-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ordersystem-api
+  template:
+    metadata:
+      labels:
+        app: ordersystem-api
+    spec:
+      containers:
+      - name: ordersystem-api
+        image: ordersystem-api:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Docker"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+        - name: ConnectionStrings__RabbitMQ
+          value: "amqp://rabbitmq:5672/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordersystem-api
+spec:
+  selector:
+    app: ordersystem-api
+  ports:
+  - port: 80
+    targetPort: 8080

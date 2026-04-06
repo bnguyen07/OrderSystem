@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: enterprise-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/Order
+        pathType: Prefix
+        backend:
+          service:
+            name: ordersystem-api
+            port:
+              number: 80
+      - path: /api/Product
+        pathType: Prefix
+        backend:
+          service:
+            name: catalog-api
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ordersystem-ui
+            port:
+              number: 80

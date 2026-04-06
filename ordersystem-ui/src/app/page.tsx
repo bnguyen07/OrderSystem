@@ -19,9 +19,9 @@ export default function OrderDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
 
-  // 1. Fetch exactly from the Catalog Microservice (Port 5056)
+  // 1. Fetch exactly from the Catalog Microservice via K8s Ingress!
   useEffect(() => {
-    fetch("http://localhost:5056/api/Product")
+    fetch("/api/Product")
       .then((res) => res.json())
       .then((data) => setProducts(data))
       .catch((err) => console.error("Catalog API offline", err));
@@ -31,7 +31,7 @@ export default function OrderDashboard() {
     setCart([...cart, productId]);
   };
 
-  // 2. Submit the Order directly to the OrderSystem Microservice (Port 5055)
+  // 2. Submit the Order directly to the OrderSystem Microservice via K8s Ingress!
   const submitOrder = async () => {
     setIsProcessing(true);
     setOrderStatus("Transmitting Securely to RabbitMQ...");
@@ -40,7 +40,7 @@ export default function OrderDashboard() {
       // Extract the raw Google Identity Token from our NextAuth session!
       const token = (session as any)?.idToken;
 
-      const response = await fetch("http://localhost:5055/api/Order", {
+      const response = await fetch("/api/Order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,7 @@ export default function OrderDashboard() {
         <section className="lg:col-span-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
-            <h2 className="text-xl font-bold tracking-wide">Catalog Service (Port 5056)</h2>
+            <h2 className="text-xl font-bold tracking-wide">Catalog Service (K8s Ingress)</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -156,7 +156,7 @@ export default function OrderDashboard() {
            
            <div className="flex items-center gap-3 mb-8">
             <div className="w-3 h-3 rounded-full bg-amber-400 animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.8)]"></div>
-            <h2 className="text-xl font-bold tracking-wide">Order Gateway (Port 5055)</h2>
+            <h2 className="text-xl font-bold tracking-wide">Order Gateway (K8s Ingress)</h2>
           </div>
 
           <div className="space-y-6">

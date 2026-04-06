@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordersystem-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordersystem-ui
+  template:
+    metadata:
+      labels:
+        app: ordersystem-ui
+    spec:
+      containers:
+      - name: ordersystem-ui
+        image: ordersystem-ui:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXTAUTH_URL
+          value: "http://localhost"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordersystem-ui
+spec:
+  selector:
+    app: ordersystem-ui
+  ports:
+  - port: 80
+    targetPort: 3000

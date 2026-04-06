@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-api
+  template:
+    metadata:
+      labels:
+        app: catalog-api
+    spec:
+      containers:
+      - name: catalog-api
+        image: catalog-api:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=sqlserver;Database=CatalogDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+        - name: RedisCache__Configuration
+          value: "redis:6379"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+spec:
+  selector:
+    app: catalog-api
+  ports:
+  - port: 80
+    targetPort: 8080
