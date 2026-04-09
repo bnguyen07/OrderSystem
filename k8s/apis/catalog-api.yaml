@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: catalog-api
-        image: catalog-api:latest
-        imagePullPolicy: Never
+        image: brian2447/catalog-api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:

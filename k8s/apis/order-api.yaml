@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: ordersystem-api
-        image: ordersystem-api:latest
-        imagePullPolicy: Never
+        image: brian2447/ordersystem-api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:

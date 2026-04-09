@@ -14,13 +14,13 @@ spec:
     spec:
       containers:
       - name: ordersystem-ui
-        image: ordersystem-ui:latest
-        imagePullPolicy: Never
+        image: brian2447/ordersystem-ui:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
-        env:
-        - name: NEXTAUTH_URL
-          value: "http://localhost"
+        envFrom:
+        - secretRef:
+            name: nextjs-auth
 ---
 apiVersion: v1
 kind: Service
