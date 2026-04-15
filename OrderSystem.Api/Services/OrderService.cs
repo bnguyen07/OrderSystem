@@ -32,6 +32,25 @@ namespace OrderSystem.Api.Services
             return result;
         }
 
+        public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersAsync()
+        {
+            var orders = await _repository.GetAllOrdersAsync();
+            var result = new List<OrderResponseDto>();
+
+            foreach (var order in orders)
+            {
+                var items = await _repository.GetOrderItemsAsync(order.Id);
+                result.Add(new OrderResponseDto
+                {
+                    Id = order.Id,
+                    UserId = order.UserId,
+                    ProductIds = items.Select(i => i.ProductId).ToList()
+                });
+            }
+
+            return result;
+        }
+
         public async Task<OrderResponseDto> CreateOrderAsync(OrderCreateDto dto)
         {
             var order = new Order { UserId = dto.UserId };

@@ -20,6 +20,11 @@ namespace OrderSystem.Api.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        {
+            return await _context.Orders.ToListAsync();
+        }
+
         public async Task<IEnumerable<OrderItem>> GetOrderItemsAsync(int orderId)
         {
             return await _context.OrderItems

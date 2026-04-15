@@ -1,0 +1,12 @@
+# nextjs-auth-patch.yaml is intentionally NOT committed.
+# To apply secrets to your cluster, run:
+#
+#   kubectl create secret generic nextjs-auth \
+#     --from-literal=GOOGLE_CLIENT_ID="<your-google-client-id>" \
+#     --from-literal=GOOGLE_CLIENT_SECRET="<your-google-client-secret>" \
+#     --from-literal=NEXTAUTH_SECRET="<your-nextauth-secret>" \
+#     --from-literal=NEXTAUTH_URL="http://<your-ip>.nip.io" \
+#     --from-literal=GEMINI_API_KEY="<your-gemini-api-key>" \
+#     --save-config
+#
+# Or use: kubectl apply -f nextjs-auth-patch.yaml (with a local copy that is NOT committed)

@@ -44,6 +44,21 @@ namespace OrderSystem.Api.Controllers
             return Ok(orders);
         }
 
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<OrderResponseDto>>> GetAllOrders()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (email != "brian.nguyen2447@gmail.com")
+            {
+                // MATHEMATICAL SECURE BLOCKADE
+                return Forbid();
+            }
+
+            var orders = await _service.GetAllOrdersAsync();
+            return Ok(orders);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateOrder(OrderCreateDto dto)
         {
