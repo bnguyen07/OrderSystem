@@ -11,13 +11,6 @@ namespace Catalog.Api.Data
 
         public DbSet<Product> Products { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Product>().HasData(
-                new Product { Id = 1, Name = "Laptop", Price = 999.99m, StockQuantity = 50 },
-                new Product { Id = 2, Name = "Smartphone", Price = 699.99m, StockQuantity = 100 },
-                new Product { Id = 3, Name = "Wireless Mouse", Price = 29.99m, StockQuantity = 200 }
-            );
-        }
+        // Seed data removed — FakeStoreSeeder handles population dynamically on startup
     }
 }

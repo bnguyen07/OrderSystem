@@ -11,5 +11,7 @@ namespace OrderSystem.Api.DTOs
         public int Id { get; set; }
         public int UserId { get; set; }
         public List<int> ProductIds { get; set; } = new();
+        public string Status { get; set; } = "Pending";
+        public DateTime CreatedAt { get; set; }
     }
 }

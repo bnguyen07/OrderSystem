@@ -50,7 +50,7 @@ namespace OrderSystem.Api.Consumers
 
             if (result != null)
             {
-                _logger.LogInformation("✅ Background Order Successfully Saved to SQL Database for User ID: {UserId}", context.Message.UserId);
+                _logger.LogInformation("✅ Order #{OrderId} saved — Status: {Status} — User {UserId}", result.Id, result.Status, context.Message.UserId);
             }
             else
             {

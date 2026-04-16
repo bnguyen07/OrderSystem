@@ -38,11 +38,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 4. On Boot, automatically build the Database and inject baseline Seed data!
+// 4. On Boot, automatically build the Database and seed real product data from FakeStore API
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     context.Database.Migrate();
+    await FakeStoreSeeder.SeedAsync(context);
 }
 
 // Apply the CORS pipeline rule exactly before routing

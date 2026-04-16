@@ -25,6 +25,8 @@ namespace OrderSystem.Api.Services
                 {
                     Id = order.Id,
                     UserId = order.UserId,
+                    Status = order.Status,
+                    CreatedAt = order.CreatedAt,
                     ProductIds = items.Select(i => i.ProductId).ToList()
                 });
             }
@@ -44,6 +46,8 @@ namespace OrderSystem.Api.Services
                 {
                     Id = order.Id,
                     UserId = order.UserId,
+                    Status = order.Status,
+                    CreatedAt = order.CreatedAt,
                     ProductIds = items.Select(i => i.ProductId).ToList()
                 });
             }
@@ -53,7 +57,7 @@ namespace OrderSystem.Api.Services
 
         public async Task<OrderResponseDto> CreateOrderAsync(OrderCreateDto dto)
         {
-            var order = new Order { UserId = dto.UserId };
+            var order = new Order { UserId = dto.UserId, Status = "Pending", CreatedAt = DateTime.UtcNow };
             
             var orderItems = dto.ProductIds.Select(pid => new OrderItem
             {
@@ -66,6 +70,8 @@ namespace OrderSystem.Api.Services
             {
                 Id = createdOrder.Id,
                 UserId = createdOrder.UserId,
+                Status = createdOrder.Status,
+                CreatedAt = createdOrder.CreatedAt,
                 ProductIds = dto.ProductIds
             };
         }
