@@ -3,9 +3,9 @@
   <p>A highly scalable, distributed microservices architecture built to demonstrate modern e-commerce engineering, from monolithic foundations to Kubernetes auto-scaling.</p>
 
   <!-- Badges -->
-  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet" alt=".NET 8" />
+  <img src="https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet" alt=".NET 9" />
   <img src="https://img.shields.io/badge/Next.js-14.0-black?logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white" alt="Kubernetes" />
+  <img src="https://img.shields.io/badge/Azure_Kubernetes_Service-0078D4?logo=microsoftazure&logoColor=white" alt="AKS" />
   <img src="https://img.shields.io/badge/RabbitMQ-FF6600?logo=rabbitmq&logoColor=white" alt="RabbitMQ" />
   <img src="https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white" alt="Redis" />
 </div>
@@ -52,7 +52,7 @@ To visualize the system's modularity and frontend aesthetic, here are a few core
 
 ## 🛠️ Tech Stack & Architecture
 
-- **Backend**: C# .NET 8 Web APIs, Entity Framework Core, SQL Server
+- **Backend**: C# .NET 9 Web APIs, Entity Framework Core, SQL Server
 - **Frontend**: Next.js 14, React, Tailwind CSS, TypeScript
 - **Messaging Pipeline (Event-Driven)**: MassTransit & RabbitMQ
 - **Caching**: Redis
@@ -70,7 +70,7 @@ Before you start, ensure you have the following installed on your machine:
 1. [Docker Desktop](https://www.docker.com/products/docker-desktop) (With **Kubernetes** explicitly enabled in the settings).
 2. `kubectl` CLI tool.
 3. Node.js (v20+) & NPM.
-4. .NET 8.0 SDK.
+4. .NET 9.0 SDK.
 
 ---
 
