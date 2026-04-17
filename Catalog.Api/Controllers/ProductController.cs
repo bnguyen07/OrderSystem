@@ -29,5 +29,12 @@ namespace Catalog.Api.Controllers
             if (product == null) return NotFound();
             return Ok(product);
         }
+
+        [HttpPost]
+        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        {
+            var created = await _service.CreateProductAsync(product);
+            return CreatedAtAction(nameof(GetProduct), new { id = created.Id }, created);
+        }
     }
 }

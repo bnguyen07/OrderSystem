@@ -9,6 +9,7 @@ namespace Catalog.Api.Services
     {
         Task<IEnumerable<Product>> GetAllProductsAsync();
         Task<Product?> GetProductByIdAsync(int id);
+        Task<Product> CreateProductAsync(Product product);
     }
 
     public class ProductService : IProductService
@@ -51,6 +52,12 @@ namespace Catalog.Api.Services
             }
 
             return product;
+        }
+
+        public async Task<Product> CreateProductAsync(Product product)
+        {
+            _logger.LogInformation($"[Catalog Microservice] 🆕 Creating new Product '{product.Name}'.");
+            return await _repository.AddAsync(product);
         }
     }
 }

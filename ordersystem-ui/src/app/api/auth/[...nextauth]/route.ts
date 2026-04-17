@@ -21,7 +21,7 @@ const handler = NextAuth({
           // Point to localhost during Next.js SSG build, but the Docker K8s networking in Azure uses 'ordersystem-api'
           const apiHost = process.env.NODE_ENV === "production" ? "http://ordersystem-api:80" : "http://localhost:5246";
           
-          const res = await fetch(`${apiHost}/api/Auth/login`, {
+          const res = await fetch(`${apiHost}/api/Identity/login`, {
             method: 'POST',
             body: JSON.stringify({ email: credentials.email, password: credentials.password }),
             headers: { "Content-Type": "application/json" }
@@ -40,6 +40,9 @@ const handler = NextAuth({
   ],
   session: {
     strategy: "jwt",
+  },
+  pages: {
+    signIn: '/auth/signin',
   },
   callbacks: {
     async jwt({ token, account, user }) {

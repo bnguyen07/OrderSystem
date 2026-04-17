@@ -25,7 +25,11 @@ namespace OrderSystem.Api.Consumers
 
             // 1. Physically Network to the Catalog Microservice to confirm Products exist!
             var httpClient = _httpClientFactory.CreateClient();
-            var catalogHost = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Docker" ? "catalog-api:8080" : "localhost:5056";
+            var catalogHost = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Docker" ? "catalog-api:80" : "localhost:5056";
+
+            // ARTIFICIAL 4-SECOND DELAY to simulate slow credit card processing
+            // This exposes the RabbitMQ queue backlog for demonstration purposes
+            await Task.Delay(4000);
 
             foreach (var productId in context.Message.ProductIds)
             {

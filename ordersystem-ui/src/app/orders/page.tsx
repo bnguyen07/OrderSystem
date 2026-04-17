@@ -56,7 +56,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!session) return;
     const token = (session as any)?.idToken;
-    fetch("/api/Order/user/1", {
+    fetch("/api/Order/user", {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.json())
@@ -81,11 +81,22 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-cyan-500 tracking-tight">
             OrderSystem
           </h1>
-          <p className="text-slate-400 text-xs">My Order History</p>
+          <p className="text-slate-400 text-xs font-medium">My Order History</p>
         </div>
-        <Link href="/" className="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition">
-          ← Back to Catalog
-        </Link>
+        <div className="flex items-center gap-3">
+          {session && (
+            <>
+              <img src={session.user?.image ?? ''} alt="avatar" className="w-9 h-9 rounded-full border-2 border-indigo-400" />
+              <div className="hidden sm:flex flex-col text-xs">
+                <span className="font-bold text-slate-800">{session.user?.name}</span>
+                <span className="text-slate-400">{session.user?.email}</span>
+              </div>
+            </>
+          )}
+          <Link href="/" className="ml-2 text-xs font-bold uppercase tracking-wider bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-300 px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1">
+            ← Back to Catalog
+          </Link>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-8 py-10">

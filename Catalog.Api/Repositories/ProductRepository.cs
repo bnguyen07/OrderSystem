@@ -8,6 +8,7 @@ namespace Catalog.Api.Repositories
     {
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product?> GetByIdAsync(int id);
+        Task<Product> AddAsync(Product product);
     }
 
     public class ProductRepository : IProductRepository
@@ -22,5 +23,12 @@ namespace Catalog.Api.Repositories
         public async Task<IEnumerable<Product>> GetAllAsync() => await _context.Products.ToListAsync();
 
         public async Task<Product?> GetByIdAsync(int id) => await _context.Products.FindAsync(id);
+
+        public async Task<Product> AddAsync(Product product)
+        {
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            return product;
+        }
     }
 }

@@ -58,6 +58,40 @@ export default function AdminPage() {
       .catch(() => setLoading(false));
   }, [session]);
 
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', category: 'electronics', image: '', description: '', stockQuantity: '' });
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session) return;
+    setIsAdding(true);
+    try {
+      const token = (session as any)?.idToken;
+      const res = await fetch("/api/Product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          category: newProduct.category,
+          image: newProduct.image || `https://picsum.photos/seed/${Math.random()}/400`,
+          description: newProduct.description,
+          stockQuantity: parseInt(newProduct.stockQuantity) || 0
+        })
+      });
+      if (res.ok) {
+        setNewProduct({ name: '', price: '', category: 'electronics', image: '', description: '', stockQuantity: '' });
+        alert("Product successfully added to the catalog!");
+      } else {
+        alert("Failed to add product.");
+      }
+    } catch (e) {
+      alert("Error adding product.");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   // KPI Metrics
   const totalOrders = orders.length;
   const totalItems = orders.reduce((s, o) => s + o.productIds.length, 0);
@@ -125,6 +159,31 @@ export default function AdminPage() {
               <KpiCard label="Items Ordered"  value={String(totalItems)}  sub="Across all orders" icon="🛒" color="bg-cyan-500"/>
               <KpiCard label="Unique Users"   value={String(uniqueUsers)} sub="Active customers" icon="👥" color="bg-amber-500"/>
               <KpiCard label="Avg Items/Order" value={totalOrders > 0 ? (totalItems / totalOrders).toFixed(1) : "—"} sub="Per order" icon="📊" color="bg-emerald-500"/>
+            </div>
+
+            {/* Add Product Form */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <h3 className="font-black text-slate-800 mb-4 flex items-center gap-2">
+                <span className="text-emerald-500">＋</span> Add New Product
+              </h3>
+              <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input required placeholder="Product Name" className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
+                <input required type="number" step="0.01" placeholder="Price ($)" className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
+                <select className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400 bg-white" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}>
+                  <option value="electronics">Electronics</option>
+                  <option value="jewelery">Jewelery</option>
+                  <option value="men's clothing">Men's Clothing</option>
+                  <option value="women's clothing">Women's Clothing</option>
+                </select>
+                <input type="number" placeholder="Stock Quantity" className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400" value={newProduct.stockQuantity} onChange={e => setNewProduct({...newProduct, stockQuantity: e.target.value})} />
+                <input placeholder="Image URL (Leave empty for random AI image)" className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400 md:col-span-2" value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} />
+                <textarea required placeholder="Description..." className="border border-slate-200 p-2.5 rounded-xl text-sm outline-none focus:border-indigo-400 md:col-span-2 h-20" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} />
+                <div className="md:col-span-2 flex justify-end">
+                  <button disabled={isAdding} type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl active:scale-95 transition-all text-sm shadow-md shadow-emerald-600/20">
+                    {isAdding ? "Adding..." : "Publish Product to Catalog"}
+                  </button>
+                </div>
+              </form>
             </div>
 
             {/* Charts Row */}

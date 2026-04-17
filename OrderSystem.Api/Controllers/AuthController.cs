@@ -6,7 +6,7 @@ using OrderSystem.Api.Services;
 
 namespace OrderSystem.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Identity")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -58,5 +58,21 @@ namespace OrderSystem.Api.Controllers
                 omniToken = token
             });
         }
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                // To prevent email enumeration, we still return Ok even if it doesn't exist
+                return Ok(new { Message = "If an account exists with that email, a password reset link has been sent." });
+            }
+
+            // In a real system, we'd fire an event to a NotificationService via RabbitMQ here.
+            // For now, simply return a 200 OK.
+            return Ok(new { Message = "If an account exists with that email, a password reset link has been sent." });
+        }
     }
+
+    public record ForgotPasswordRequest(string Email);
 }

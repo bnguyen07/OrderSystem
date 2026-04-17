@@ -32,6 +32,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+
 const CATEGORIES = ["All", "electronics", "men's clothing", "women's clothing", "jewelery"];
 
 export default function OrderDashboard() {
@@ -57,11 +58,49 @@ export default function OrderDashboard() {
     return sum + (p?.price ?? 0) * c.quantity;
   }, 0);
 
-  const filteredProducts = useMemo(() => products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  }), [products, search, selectedCategory]);
+  const filteredProducts = useMemo(() => {
+    if (!search.trim()) {
+      return selectedCategory === "All"
+        ? products
+        : products.filter(p => p.category === selectedCategory);
+    }
+
+    const rawQuery = search.toLowerCase().trim();
+    // Basic singularization to catch plurals ("computers" -> "computer", etc.)
+    const query = rawQuery.replace(/s\b/g, ''); 
+
+    // E-commerce semantic category map
+    const keywordMap = {
+      electronics: ['computer', 'laptop', 'pc', 'mac', 'monitor', 'tv', 'phone', 'ssd', 'drive', 'tech', 'hard drive'],
+      jewelery: ['ring', 'gold', 'silver', 'bracelet', 'necklace', 'jewel'],
+      clothing: ['shirt', 'jacket', 'clothes', 'clothing', 'apparel', 'cotton', 'casual', 'mens', 'womens']
+    };
+
+    const isElectronics = keywordMap.electronics.some(k => query.includes(k) || rawQuery.includes(k));
+    const isJewelry = keywordMap.jewelery.some(k => query.includes(k) || rawQuery.includes(k));
+    const isClothing = keywordMap.clothing.some(k => query.includes(k) || rawQuery.includes(k));
+
+    // Tokenize multi-word searches (e.g. "wd external drive")
+    const searchTokens = rawQuery.split(/\s+/);
+
+    return products.filter(p => {
+      const haystack = `${p.name} ${p.description} ${p.category}`.toLowerCase();
+      
+      // Strict match: every word typed must appear SOMEWHERE in the product details
+      const textMatch = searchTokens.every(t => haystack.includes(t)) || haystack.includes(query);
+      
+      // Semantic match: if you typed "computer", electronics category is deeply related
+      const categoryMatch = 
+        (isElectronics && p.category === 'electronics') ||
+        (isJewelry && p.category === 'jewelery') ||
+        (isClothing && p.category.includes('clothing'));
+        
+      const matchesSearch = textMatch || categoryMatch;
+      const matchesCategoryFilter = selectedCategory === "All" || p.category === selectedCategory;
+      
+      return matchesSearch && matchesCategoryFilter;
+    });
+  }, [products, search, selectedCategory]);
 
   const addToCart = (productId: number) => {
     setCart(prev => {
@@ -253,9 +292,43 @@ export default function OrderDashboard() {
                 );
               })}
               {filteredProducts.length === 0 && !loadingProducts && (
-                <div className="col-span-2 text-center py-16 text-slate-400">
-                  <p className="text-4xl mb-2">🔍</p>
-                  <p className="font-medium">No products match your search.</p>
+                <div className="col-span-2">
+                  <div className="text-center py-8 text-slate-400 mb-6">
+                    <p className="text-3xl mb-2">🔍</p>
+                    <p className="font-medium text-slate-500">No results for <span className="font-bold text-indigo-600">"{search}"</span></p>
+                    <p className="text-sm mt-1">Showing popular items instead</p>
+                  </div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">⭐ Popular Items</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {[...products].sort((a, b) => b.rating - a.rating).slice(0, 4).map(product => {
+                      const cartItem = cart.find(c => c.productId === product.id);
+                      return (
+                        <div key={product.id} className="group bg-white rounded-2xl border border-indigo-100 shadow-sm hover:shadow-lg hover:shadow-indigo-100 transition-all duration-300 flex flex-col overflow-hidden">
+                          <div className="h-44 bg-slate-50 flex items-center justify-center p-4 border-b border-slate-100">
+                            <img src={product.image} alt={product.name} className="h-full object-contain group-hover:scale-105 transition-transform duration-300"/>
+                          </div>
+                          <div className="p-4 flex flex-col gap-2 flex-1">
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{product.name}</h3>
+                            <StarRating rating={product.rating}/>
+                            <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+                              <p className="text-xl font-black text-indigo-700">${product.price.toFixed(2)}</p>
+                              {cartItem ? (
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => removeFromCart(product.id)} className="w-8 h-8 rounded-full border border-indigo-200 text-indigo-600 font-bold hover:bg-indigo-50 transition flex items-center justify-center">−</button>
+                                  <span className="w-6 text-center font-bold text-slate-800">{cartItem.quantity}</span>
+                                  <button onClick={() => addToCart(product.id)} className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition flex items-center justify-center">+</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => addToCart(product.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 active:scale-95 transition-all">
+                                  Add to Cart
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
