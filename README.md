@@ -59,6 +59,44 @@ To visualize the system's modularity and frontend aesthetic, here are a few core
 - **Authentication**: NextAuth.js (Google OAuth & JWT Credentials)
 - **Infrastructure**: Docker Desktop, Kubernetes (AKS/Minikube), Nginx Ingress Controller
 
+### 🏗️ Architecture (Phase 1)
+To visualize exactly how control flows through the clean, decoupled microservice ecosystem:
+
+```mermaid
+graph TD
+    classDef frontend fill:#000,stroke:#333,stroke-width:2px,color:#fff;
+    classDef api fill:#512BD4,stroke:#333,stroke-width:2px,color:#fff;
+    classDef app fill:#2b78e4,stroke:#333,stroke-width:2px,color:#fff;
+    classDef domain fill:#0d9488,stroke:#333,stroke-width:2px,color:#fff;
+    classDef infra fill:#f59e0b,stroke:#333,stroke-width:2px,color:#fff;
+    classDef external fill:#4b5563,stroke:#333,stroke-width:2px,color:#fff;
+
+    Client["💻 Client (Next.js Frontend)"]:::frontend --> |REST / HTTP| API
+    
+    subgraph "Backend Core (C# .NET 9)"
+        API["📡 API Layer <br>(Controllers & Routing)"]:::api
+        APP["⚙️ Application Layer <br>(Interfaces & Use Cases)"]:::app
+        DOM["🧠 Domain Layer <br>(Business Logic & Entities)"]:::domain
+        
+        API --> |Injects| APP
+        APP --> |Contains| DOM
+    end
+    
+    INFRA["🏗️ Infrastructure Layer <br>(Concrete Implementations & Integrations)"]:::infra
+    
+    APP -.-> |Inversion of Control| INFRA
+    
+    subgraph "External Integrations"
+        DB[("🗄️ SQL Server <br>(EF Core)")]:::external
+        MQ[["🐇 RabbitMQ <br>(MassTransit)"]]:::external
+        CH[("⚡ Redis <br>(Caching)")]:::external
+    end
+    
+    INFRA --> DB
+    INFRA --> MQ
+    INFRA --> CH
+```
+
 ---
 
 ## 🚀 Getting Started
